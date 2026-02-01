@@ -14,7 +14,7 @@ This project is a TypeScript-based smart home control system that defines device
 - **Real-Time Updates**: WebSocket integration for live state synchronization across clients
 - **TypeScript**: Fully typed codebase for better development experience and error prevention
 - **Mock Data**: Includes sample devices and scenes for testing and demonstration
-- **React Dashboard**: Minimal frontend interface for home automation control
+- **React Dashboard**: Minimal frontend interface with dashboard component and device placeholders
 - **Electron App**: Desktop application wrapper for the React dashboard
 
 ## Installation
@@ -71,6 +71,14 @@ This installs all dependencies including Express, WebSocket, and TypeScript-rela
    ```
 
    Starts the React dev server and Electron app together.
+
+9. **Frontend + Electron only** (from client directory):
+   ```bash
+   cd client
+   npm run dev-electron
+   ```
+
+   Starts the React dev server and Electron app together from the client folder.
 
 ### API Endpoints
 
@@ -149,7 +157,7 @@ Connect to `ws://localhost:3000` for real-time updates.
    - Backend: `npm start`
    - Frontend: `cd client && npm run dev`
    - Electron: `npm run electron` (after frontend is running)
-3. **Frontend + Electron only**: `npm run electron-dev`
+3. **Frontend + Electron only**: `npm run electron-dev` or `cd client && npm run dev-electron`
 4. Test the API:
    - Get current state: `curl http://localhost:3000/state`
    - Run a scene: `curl -X POST http://localhost:3000/scene/run -H "Content-Type: application/json" -d '{"sceneName": "Morning"}'`
@@ -177,7 +185,7 @@ home-control/
 │   ├── .eslintrc.cjs         # ESLint configuration
 │   └── src/                  # Frontend source code
 │       ├── main.tsx          # React app entry point
-│       ├── App.tsx           # Main App component
+│       ├── App.tsx           # Main App component with Dashboard
 │       ├── App.css           # App-specific styles
 │       └── index.css         # Global styles
 ├── electron/                 # Electron desktop application
