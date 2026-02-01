@@ -14,6 +14,7 @@ This project is a TypeScript-based smart home control system that defines device
 - **Real-Time Updates**: WebSocket integration for live state synchronization across clients
 - **TypeScript**: Fully typed codebase for better development experience and error prevention
 - **Mock Data**: Includes sample devices and scenes for testing and demonstration
+- **React Dashboard**: Minimal frontend interface for home automation control
 
 ## Installation
 
@@ -27,19 +28,37 @@ This installs all dependencies including Express, WebSocket, and TypeScript-rela
 
 ### Development Setup
 
-1. **Build the project**:
+1. **Install backend dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Install frontend dependencies**:
+   ```bash
+   cd client
+   npm install
+   cd ..
+   ```
+
+3. **Build the backend**:
    ```bash
    npm run build
    ```
 
-2. **Start the server**:
+4. **Start the backend server**:
    ```bash
    npm start
    ```
 
-   The server runs on `http://localhost:3000`.
+5. **Start the frontend development server** (in a new terminal):
+   ```bash
+   cd client
+   npm run dev
+   ```
 
-3. **Development mode** (with auto-restart):
+   The frontend runs on `http://localhost:5173` (default Vite port).
+
+6. **Development mode** for backend (with auto-restart):
    ```bash
    npm run dev
    ```
@@ -116,25 +135,40 @@ Connect to `ws://localhost:3000` for real-time updates.
 
 ### Example Usage
 
-1. Start the server with `npm start`
-2. Test the API:
+1. Start the backend server with `npm start`
+2. Start the frontend with `cd client && npm run dev`
+3. Open `http://localhost:5173` in your browser to see the dashboard
+4. Test the API:
    - Get current state: `curl http://localhost:3000/state`
    - Run a scene: `curl -X POST http://localhost:3000/scene/run -H "Content-Type: application/json" -d '{"sceneName": "Morning"}'`
-3. For WebSocket testing, use a client like [WebSocket King](https://websocketking.com/) or implement in your frontend
+5. For WebSocket testing, use a client like [WebSocket King](https://websocketking.com/) or implement in your frontend
 
 ## Project Structure
 
 ```
 home-control/
 ├── README.md                 # Project documentation
-├── package.json              # Node.js dependencies and scripts
-├── tsconfig.json             # TypeScript configuration
-├── src/                      # Source code directory
+├── package.json              # Backend Node.js dependencies and scripts
+├── tsconfig.json             # Backend TypeScript configuration
+├── .gitignore                # Git ignore rules
+├── src/                      # Backend source code
 │   ├── types.ts              # TypeScript type definitions
 │   ├── index.ts              # Example/demo script with sample data
 │   └── server.ts             # Express server with API and WebSocket
-├── dist/                     # Compiled JavaScript output (generated)
-└── node_modules/             # Installed dependencies (generated)
+├── dist/                     # Backend compiled JavaScript output (generated)
+├── client/                   # Frontend React application
+│   ├── package.json          # Frontend dependencies and scripts
+│   ├── vite.config.ts        # Vite build configuration
+│   ├── index.html            # Main HTML file
+│   ├── tsconfig.json         # Frontend TypeScript configuration
+│   ├── tsconfig.node.json    # Node-specific TypeScript config
+│   ├── .eslintrc.cjs         # ESLint configuration
+│   └── src/                  # Frontend source code
+│       ├── main.tsx          # React app entry point
+│       ├── App.tsx           # Main App component
+│       ├── App.css           # App-specific styles
+│       └── index.css         # Global styles
+└── node_modules/             # Backend installed dependencies (generated)
 ```
 
 ### Key Files Explanation
@@ -168,25 +202,29 @@ home-control/
 
 ## Architecture
 
-The system follows a simple client-server architecture:
+The system follows a client-server architecture with separate frontend and backend:
 
-1. **Server**: Express.js application managing device state and scene execution
+1. **Backend Server**: Express.js application managing device state and scene execution
 2. **API Layer**: REST endpoints for external control
 3. **Real-Time Layer**: WebSocket for push notifications
-4. **Data Layer**: In-memory storage of device states and scene definitions
+4. **Frontend**: React application for user interface
+5. **Data Layer**: In-memory storage of device states and scene definitions
 
 Device states are updated in-place, and changes are immediately broadcast to connected WebSocket clients, enabling real-time synchronization across multiple interfaces.
 
 ## Development
 
-- **Language**: TypeScript
-- **Runtime**: Node.js
-- **Framework**: Express.js
+- **Backend Language**: TypeScript
+- **Backend Runtime**: Node.js
+- **Backend Framework**: Express.js
 - **WebSocket**: ws library
+- **Frontend Framework**: React with TypeScript
+- **Frontend Build Tool**: Vite
 - **Build Tool**: TypeScript compiler (tsc)
 
 To extend the system:
-- Add new device types in `types.ts`
-- Implement additional API endpoints in `server.ts`
+- Add new device types in `src/types.ts`
+- Implement additional API endpoints in `src/server.ts`
 - Create new scenes by adding to the scenes array
 - Integrate with real smart home APIs by replacing mock data with actual device communication
+- Enhance the frontend in `client/src/` to connect to the backend API and WebSocket
