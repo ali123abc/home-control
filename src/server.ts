@@ -24,19 +24,52 @@ const scenes: Scene[] = [
   {
     name: 'Morning',
     actions: [
-      { deviceId: 'hue1', type: 'brightness', value: 80 },
-      { deviceId: 'hue1', type: 'color', value: { r: 255, g: 255, b: 255 } },
-      { deviceId: 'nano1', type: 'brightness', value: 70 }
+      { deviceId: 'hue1', state: { brightness: 80, color: { r: 255, g: 255, b: 255 } } },
+      { deviceId: 'nano1', state: { brightness: 70 } }
     ]
   },
   {
     name: 'Evening',
     actions: [
-      { deviceId: 'hue1', type: 'temperature', value: 2700 },
-      { deviceId: 'nano1', type: 'color', value: { r: 255, g: 100, b: 50 } }
+      { deviceId: 'hue1', state: { temperature: 2700 } },
+      { deviceId: 'nano1', state: { color: { r: 255, g: 100, b: 50 } } }
     ]
   }
 ];
+
+function broadcastUpdate() {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: 'state', data: { devices } }));
+    }
+  });
+}
+
+function runScene(scene: Scene): Device[] {
+  scene.actions.forEach(action => {
+    const device = devices.find(d => d.id === action.deviceId);
+    if (device) {
+      // Update the device state with the action's state, respecting capabilities
+      if (action.state.isOn !== undefined) {
+        device.state.isOn = action.state.isOn;
+      }
+      if (action.state.brightness !== undefined && device.capabilities.brightness) {
+        device.state.brightness = action.state.brightness;
+      }
+      if (action.state.color !== undefined && device.capabilities.color) {
+        device.state.color = action.state.color;
+      }
+      if (action.state.temperature !== undefined && device.capabilities.temperature) {
+        device.state.temperature = action.state.temperature;
+      }
+    }
+  });
+
+  // Broadcast the updated state to all connected WebSocket clients
+  broadcastUpdate();
+
+  return devices;
+}
 
 const app = express();
 const port = 3000;
@@ -49,34 +82,14 @@ app.get('/state', (req, res) => {
 });
 
 app.post('/scene/run', (req, res) => {
-  const { sceneName } = req.body;
-  const scene = scenes.find(s => s.name === sceneName);
-  if (!scene) {
-    return res.status(404).json({ error: 'Scene not found' });
+  const { scene } = req.body as { scene: Scene };
+  if (!scene || !scene.actions) {
+    return res.status(400).json({ error: 'Invalid scene object' });
   }
 
-  // Apply actions to devices
-  scene.actions.forEach((action: Action) => {
-    const device = devices.find(d => d.id === action.deviceId);
-    if (device) {
-      if (action.type === 'brightness' && device.capabilities.brightness) {
-        device.state.brightness = action.value as number;
-      } else if (action.type === 'color' && device.capabilities.color) {
-        device.state.color = action.value as { r: number; g: number; b: number };
-      } else if (action.type === 'temperature' && device.capabilities.temperature) {
-        device.state.temperature = action.value as number;
-      }
-    }
-  });
+  const updatedDevices = runScene(scene);
 
-  // Broadcast update to WebSocket clients
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'state', data: { devices } }));
-    }
-  });
-
-  res.json({ success: true, message: `Scene '${sceneName}' executed` });
+  res.json({ success: true, message: `Scene '${scene.name}' executed`, devices: updatedDevices });
 });
 
 app.post('/device/:id/toggle', (req, res) => {
@@ -86,14 +99,9 @@ app.post('/device/:id/toggle', (req, res) => {
     return res.status(404).json({ error: 'Device not found' });
   }
   device.state.isOn = !device.state.isOn;
-  // Optionally set brightness to 0 if off, but for now just toggle isOn
 
   // Broadcast update
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'state', data: { devices } }));
-    }
-  });
+  broadcastUpdate();
 
   res.json({ success: true, state: device.state });
 });

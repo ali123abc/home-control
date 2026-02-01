@@ -17,10 +17,10 @@ export interface DeviceState {
   temperature?: number;
 }
 
-export type Action =
-  | { deviceId: string; type: 'brightness'; value: number }
-  | { deviceId: string; type: 'color'; value: { r: number; g: number; b: number } }
-  | { deviceId: string; type: 'temperature'; value: number };
+export interface Action {
+  deviceId: string;
+  state: Partial<DeviceState>;
+}
 
 export interface Scene {
   name: string;

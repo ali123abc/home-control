@@ -3,15 +3,17 @@ import { Device, Scene, Action } from './types';
 const devices: Device[] = [
   {
     id: 'hue1',
+    name: 'Living Room Light',
     type: 'Hue',
     capabilities: { brightness: true, color: true, temperature: true },
-    state: { brightness: 50, color: { r: 255, g: 255, b: 255 }, temperature: 4000 }
+    state: { isOn: true, brightness: 50, color: { r: 255, g: 255, b: 255 }, temperature: 4000 }
   },
   {
     id: 'nano1',
+    name: 'Bedroom Panels',
     type: 'Nanoleaf',
     capabilities: { brightness: true, color: true, temperature: false },
-    state: { brightness: 60, color: { r: 0, g: 255, b: 0 } }
+    state: { isOn: true, brightness: 60, color: { r: 0, g: 255, b: 0 } }
   }
 ];
 
@@ -19,16 +21,15 @@ const scenes: Scene[] = [
   {
     name: 'Morning',
     actions: [
-      { deviceId: 'hue1', type: 'brightness', value: 80 },
-      { deviceId: 'hue1', type: 'color', value: { r: 255, g: 255, b: 255 } },
-      { deviceId: 'nano1', type: 'brightness', value: 70 }
+      { deviceId: 'hue1', state: { brightness: 80, color: { r: 255, g: 255, b: 255 } } },
+      { deviceId: 'nano1', state: { brightness: 70 } }
     ]
   },
   {
     name: 'Evening',
     actions: [
-      { deviceId: 'hue1', type: 'temperature', value: 2700 },
-      { deviceId: 'nano1', type: 'color', value: { r: 255, g: 100, b: 50 } }
+      { deviceId: 'hue1', state: { temperature: 2700 } },
+      { deviceId: 'nano1', state: { color: { r: 255, g: 100, b: 50 } } }
     ]
   }
 ];
@@ -39,5 +40,13 @@ devices.forEach(device => console.log(`- ${device.id}: ${device.type}, capabilit
 console.log('\nDefined Scenes:');
 scenes.forEach(scene => {
   console.log(`- ${scene.name}:`);
-  scene.actions.forEach(action => console.log(`  - Set ${action.type} on ${action.deviceId} to ${typeof action.value === 'object' ? `RGB(${action.value.r}, ${action.value.g}, ${action.value.b})` : action.value}`));
+  scene.actions.forEach(action => {
+    const stateStr = Object.entries(action.state).map(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        return `${key}: RGB(${value.r}, ${value.g}, ${value.b})`;
+      }
+      return `${key}: ${value}`;
+    }).join(', ');
+    console.log(`  - Set ${action.deviceId} to ${stateStr}`);
+  });
 });
