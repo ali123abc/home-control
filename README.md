@@ -15,6 +15,7 @@ This project is a TypeScript-based smart home control system that defines device
 - **TypeScript**: Fully typed codebase for better development experience and error prevention
 - **Mock Data**: Includes sample devices and scenes for testing and demonstration
 - **React Dashboard**: Minimal frontend interface for home automation control
+- **Electron App**: Desktop application wrapper for the React dashboard
 
 ## Installation
 
@@ -50,18 +51,26 @@ This installs all dependencies including Express, WebSocket, and TypeScript-rela
    npm start
    ```
 
-5. **Start the frontend development server** (in a new terminal):
+6. **Start the Electron app** (in a new terminal, after starting frontend):
    ```bash
-   cd client
-   npm run dev
+   npm run electron
    ```
 
-   The frontend runs on `http://localhost:5173` (default Vite port).
+   This opens a 1200x800 desktop window loading the React dashboard.
 
-6. **Development mode** for backend (with auto-restart):
+7. **Full development mode** (backend + frontend + Electron):
    ```bash
-   npm run dev
+   npm run full-dev
    ```
+
+   This starts all components concurrently.
+
+8. **Frontend + Electron only**:
+   ```bash
+   npm run electron-dev
+   ```
+
+   Starts the React dev server and Electron app together.
 
 ### API Endpoints
 
@@ -135,9 +144,12 @@ Connect to `ws://localhost:3000` for real-time updates.
 
 ### Example Usage
 
-1. Start the backend server with `npm start`
-2. Start the frontend with `cd client && npm run dev`
-3. Open `http://localhost:5173` in your browser to see the dashboard
+1. **Quick start** (all components): `npm run full-dev`
+2. Start components individually:
+   - Backend: `npm start`
+   - Frontend: `cd client && npm run dev`
+   - Electron: `npm run electron` (after frontend is running)
+3. **Frontend + Electron only**: `npm run electron-dev`
 4. Test the API:
    - Get current state: `curl http://localhost:3000/state`
    - Run a scene: `curl -X POST http://localhost:3000/scene/run -H "Content-Type: application/json" -d '{"sceneName": "Morning"}'`
@@ -168,6 +180,9 @@ home-control/
 │       ├── App.tsx           # Main App component
 │       ├── App.css           # App-specific styles
 │       └── index.css         # Global styles
+├── electron/                 # Electron desktop application
+│   ├── main.js               # Electron main process
+│   └── preload.js            # Preload script for IPC
 └── node_modules/             # Backend installed dependencies (generated)
 ```
 
@@ -208,7 +223,8 @@ The system follows a client-server architecture with separate frontend and backe
 2. **API Layer**: REST endpoints for external control
 3. **Real-Time Layer**: WebSocket for push notifications
 4. **Frontend**: React application for user interface
-5. **Data Layer**: In-memory storage of device states and scene definitions
+5. **Desktop App**: Electron wrapper providing native desktop experience
+6. **Data Layer**: In-memory storage of device states and scene definitions
 
 Device states are updated in-place, and changes are immediately broadcast to connected WebSocket clients, enabling real-time synchronization across multiple interfaces.
 
@@ -220,7 +236,9 @@ Device states are updated in-place, and changes are immediately broadcast to con
 - **WebSocket**: ws library
 - **Frontend Framework**: React with TypeScript
 - **Frontend Build Tool**: Vite
-- **Build Tool**: TypeScript compiler (tsc)
+- **Desktop Framework**: Electron
+- **Build Tools**: TypeScript compiler (tsc), Electron Builder
+- **Development Tools**: Concurrently (parallel commands), Wait-on (service readiness)
 
 To extend the system:
 - Add new device types in `src/types.ts`
@@ -228,3 +246,5 @@ To extend the system:
 - Create new scenes by adding to the scenes array
 - Integrate with real smart home APIs by replacing mock data with actual device communication
 - Enhance the frontend in `client/src/` to connect to the backend API and WebSocket
+- Add IPC communication in `electron/preload.js` for desktop-specific features
+- Use `electron-builder` to create distributable packages for different platforms
