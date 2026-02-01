@@ -1,0 +1,19 @@
+# Node
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Build outputs
+dist/
