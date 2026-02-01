@@ -14,7 +14,7 @@ This project is a TypeScript-based smart home control system that defines device
 - **Real-Time Updates**: WebSocket integration for live state synchronization across clients
 - **TypeScript**: Fully typed codebase for better development experience and error prevention
 - **Mock Data**: Includes sample devices and scenes for testing and demonstration
-- **React Dashboard**: Minimal frontend interface with dashboard component and device placeholders
+- **React Dashboard**: Frontend interface that fetches and displays device list from backend API
 - **Electron App**: Desktop application wrapper for the React dashboard
 
 ## Installation

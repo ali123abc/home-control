@@ -1,6 +1,12 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+// Disable Electron cache errors on Windows
+app.commandLine.appendSwitch('--disable-cache');
+app.commandLine.appendSwitch('--disable-gpu-shader-disk-cache');
+app.commandLine.appendSwitch('--disable-software-rasterizer');
+app.commandLine.appendSwitch('--disable-features', 'VizDisplayCompositor');
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,

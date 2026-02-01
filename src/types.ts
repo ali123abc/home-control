@@ -1,5 +1,6 @@
 export interface Device {
   id: string;
+  name?: string;
   type: 'Hue' | 'Nanoleaf';
   capabilities: {
     brightness: boolean;
@@ -10,6 +11,7 @@ export interface Device {
 }
 
 export interface DeviceState {
+  isOn?: boolean;
   brightness?: number;
   color?: { r: number; g: number; b: number };
   temperature?: number;

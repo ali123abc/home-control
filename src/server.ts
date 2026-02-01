@@ -1,19 +1,22 @@
 import express from 'express';
 import WebSocket from 'ws';
+import cors from 'cors';
 import { Device, Scene, Action } from './types';
 
 const devices: Device[] = [
   {
     id: 'hue1',
+    name: 'Living Room Light',
     type: 'Hue',
     capabilities: { brightness: true, color: true, temperature: true },
-    state: { brightness: 50, color: { r: 255, g: 255, b: 255 }, temperature: 4000 }
+    state: { isOn: true, brightness: 50, color: { r: 255, g: 255, b: 255 }, temperature: 4000 }
   },
   {
     id: 'nano1',
+    name: 'Bedroom Panels',
     type: 'Nanoleaf',
     capabilities: { brightness: true, color: true, temperature: false },
-    state: { brightness: 60, color: { r: 0, g: 255, b: 0 } }
+    state: { isOn: true, brightness: 60, color: { r: 0, g: 255, b: 0 } }
   }
 ];
 
@@ -38,6 +41,7 @@ const scenes: Scene[] = [
 const app = express();
 const port = 3000;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/state', (req, res) => {
@@ -73,6 +77,25 @@ app.post('/scene/run', (req, res) => {
   });
 
   res.json({ success: true, message: `Scene '${sceneName}' executed` });
+});
+
+app.post('/device/:id/toggle', (req, res) => {
+  const { id } = req.params;
+  const device = devices.find(d => d.id === id);
+  if (!device) {
+    return res.status(404).json({ error: 'Device not found' });
+  }
+  device.state.isOn = !device.state.isOn;
+  // Optionally set brightness to 0 if off, but for now just toggle isOn
+
+  // Broadcast update
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: 'state', data: { devices } }));
+    }
+  });
+
+  res.json({ success: true, state: device.state });
 });
 
 const server = app.listen(port, () => {
