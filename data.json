@@ -1,0 +1,146 @@
+{
+  "devices": [
+    {
+      "id": "hue1",
+      "name": "Living Room Light",
+      "type": "Hue",
+      "capabilities": {
+        "brightness": true,
+        "color": true,
+        "temperature": true
+      },
+      "state": {
+        "isOn": false,
+        "brightness": 50,
+        "color": {
+          "r": 163,
+          "g": 15,
+          "b": 15
+        },
+        "temperature": 4000
+      }
+    },
+    {
+      "id": "nano1",
+      "name": "Bedroom Panels",
+      "type": "Nanoleaf",
+      "capabilities": {
+        "brightness": true,
+        "color": true,
+        "temperature": false
+      },
+      "state": {
+        "isOn": true,
+        "brightness": 60,
+        "color": {
+          "r": 0,
+          "g": 255,
+          "b": 0
+        }
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Morning",
+      "actions": [
+        {
+          "deviceId": "hue1",
+          "state": {
+            "brightness": 80,
+            "color": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            }
+          }
+        },
+        {
+          "deviceId": "nano1",
+          "state": {
+            "brightness": 70
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evening",
+      "actions": [
+        {
+          "deviceId": "hue1",
+          "state": {
+            "temperature": 2700
+          }
+        },
+        {
+          "deviceId": "nano1",
+          "state": {
+            "color": {
+              "r": 255,
+              "g": 100,
+              "b": 50
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "test1",
+      "actions": [
+        {
+          "deviceId": "hue1",
+          "state": {
+            "color": {
+              "r": 163,
+              "g": 15,
+              "b": 15
+            },
+            "isOn": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "evening1",
+      "actions": [
+        {
+          "deviceId": "nano1",
+          "state": {}
+        },
+        {
+          "deviceId": "hue1",
+          "state": {}
+        }
+      ]
+    },
+    {
+      "name": "Test office",
+      "actions": [
+        {
+          "deviceId": "4",
+          "state": {
+            "isOn": true,
+            "color": {
+              "r": 255,
+              "g": 0,
+              "b": 0
+            },
+            "brightness": 100
+          }
+        },
+        {
+          "deviceId": "10",
+          "state": {
+            "isOn": true,
+            "color": {
+              "r": 0,
+              "g": 30,
+              "b": 255
+            },
+            "brightness": 100
+          }
+        }
+      ]
+    }
+  ]
+}

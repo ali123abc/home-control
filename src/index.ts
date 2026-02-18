@@ -1,4 +1,4 @@
-import { Device, Scene, Action } from './types';
+import { Device, Scene, Action } from '../shared/types';
 
 const devices: Device[] = [
   {

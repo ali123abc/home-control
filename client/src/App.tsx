@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css'
+import { initializeWebSocket } from './socket'
+import { fetchState, toggleDevice as apiToggleDevice, runScene as apiRunScene, createScene, fetchScenes } from './api'
 
 console.log('App.tsx loaded');
 
@@ -38,59 +40,104 @@ function Dashboard() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [currentScene, setCurrentScene] = useState<{ name: string; actions: Action[] }>({ name: '', actions: [] });
   const [currentTab, setCurrentTab] = useState<'Devices' | 'Scenes' | 'Rooms'>('Devices');
+  const [wsConnected, setWsConnected] = useState(true);
+  const wsManagerRef = useRef<{ close: () => void } | null>(null);
+
+  // Fetch device state from backend
+  const fetchDeviceState = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const devices = await fetchState();
+      setDevices(devices);
+      setLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    console.log('Starting fetch...');
-    fetch('http://localhost:3000/state')
-      .then(res => {
-        console.log('Response received:', res.status);
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log('Data received:', data);
-        setDevices(data.devices);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Fetch failed:', err);
-        setError(err.message);
-        setLoading(false);
-      });
+    fetchDeviceState();
+    loadScenes();
   }, []);
 
-  const toggleDevice = async (id: string) => {
+  const loadScenes = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/device/${id}/toggle`, { method: 'POST' });
-      if (!res.ok) throw new Error('Toggle failed');
-      const data = await res.json();
-      // Update local state
-      setDevices(devices.map(d => d.id === id ? { ...d, state: data.state } : d));
+      const loadedScenes = await fetchScenes();
+      setScenes(loadedScenes);
     } catch (err) {
-      console.error('Toggle error:', err);
+      console.error('Failed to load scenes:', err);
     }
   };
 
-  const saveScene = () => {
-    if (currentScene.name && currentScene.actions.length > 0) {
-      setScenes([...scenes, { ...currentScene }]);
-      setCurrentScene({ name: '', actions: [] });
-    }
-  };
+  // Setup WebSocket connection with auto-retry
+  useEffect(() => {
+    wsManagerRef.current = initializeWebSocket(
+      'ws://localhost:3000',
+      {
+        onConnect: () => {
+          console.log('WebSocket connected');
+          setWsConnected(true);
+          // Re-fetch full state on reconnect
+          fetchDeviceState();
+          loadScenes();
+        },
+        onMessage: (data) => {
+          console.log('WebSocket message received:', data);
+          if (data.type === 'state' && data.data.devices) {
+            console.log('Updating devices from WebSocket:', data.data.devices);
+            setDevices(data.data.devices);
+          }
+        },
+        onError: (error) => {
+          console.error('WebSocket error:', error);
+          setWsConnected(false);
+        },
+        onClose: () => {
+          console.log('WebSocket closed, will retry in 2 seconds...');
+          setWsConnected(false);
+        }
+      }
+    );
 
-  const runScene = async (scene: Scene) => {
+    // Cleanup on unmount
+    return () => {
+      if (wsManagerRef.current) {
+        wsManagerRef.current.close();
+        wsManagerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleToggleDevice = async (id: string) => {
     try {
-      const res = await fetch('http://localhost:3000/scene/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scene })
-      });
-      if (!res.ok) throw new Error('Scene run failed');
+      const state = await apiToggleDevice(id);
+      // Update local state
+      setDevices(devices.map(d => d.id === id ? { ...d, state } : d));
+    } catch (err) {
+      // Error already logged in api.ts
+    }
+  };
+
+  const saveScene = async () => {
+    if (currentScene.name && currentScene.actions.length > 0) {
+      try {
+        const savedScenes = await createScene(currentScene);
+        setScenes(savedScenes);
+        setCurrentScene({ name: '', actions: [] });
+      } catch (err) {
+        console.error('Failed to save scene:', err);
+      }
+    }
+  };
+
+  const handleRunScene = async (scene: Scene) => {
+    try {
+      await apiRunScene(scene);
       // The server broadcasts updates via WebSocket, so local state should update automatically
     } catch (err) {
-      console.error('Scene run error:', err);
+      // Error already logged in api.ts
     }
   };
 
@@ -123,7 +170,11 @@ function Dashboard() {
     }}>
       <header style={{
         textAlign: 'center',
-        marginBottom: '2rem'
+        marginBottom: '2rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem'
       }}>
         <h1 style={{
           color: '#EDE4C2',
@@ -132,6 +183,18 @@ function Dashboard() {
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
           margin: 0
         }}>Home Dashboard</h1>
+        {!wsConnected && (
+          <div style={{
+            background: '#A03A13',
+            color: '#EDE4C2',
+            padding: '0.5rem 1rem',
+            borderRadius: '5px',
+            fontSize: '0.9rem',
+            fontWeight: 500
+          }}>
+            ⚠ Disconnected - Attempting to reconnect...
+          </div>
+        )}
       </header>
 
       {/* Navigation Tabs */}
@@ -183,7 +246,27 @@ function Dashboard() {
               {loading ? (
                 <p style={{ color: '#EDE4C2', gridColumn: '1 / -1', textAlign: 'center' }}>Loading devices...</p>
               ) : error ? (
-                <p style={{ color: '#F5824A', gridColumn: '1 / -1', textAlign: 'center' }}>Error loading devices: {error}</p>
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
+                  <p style={{ color: '#F5824A', marginBottom: '1rem' }}>Error loading devices: {error}</p>
+                  <button onClick={fetchDeviceState} style={{
+                    background: '#F5824A',
+                    color: '#EDE4C2',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '10px',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#E86D3A';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#F5824A';
+                  }}>
+                    Retry
+                  </button>
+                </div>
               ) : (
                 devices.map(device => (
                   <div key={device.id} style={{
@@ -214,7 +297,7 @@ function Dashboard() {
                       fontSize: '1rem',
                       margin: '0 0 1rem 0'
                     }}>Status: {device.state.isOn ? 'On' : 'Off'}</p>
-                    <button onClick={() => toggleDevice(device.id)} style={{
+                    <button onClick={() => handleToggleDevice(device.id)} style={{
                       background: device.state.isOn ? '#A03A13' : '#254F22',
                       color: '#EDE4C2',
                       border: 'none',
@@ -390,7 +473,7 @@ function Dashboard() {
                   <p style={{ color: '#A03A13', margin: '0 0 1rem 0', fontSize: '0.9rem' }}>
                     {scene.actions.length} device{scene.actions.length !== 1 ? 's' : ''}
                   </p>
-                  <button onClick={() => runScene(scene)} style={{
+                  <button onClick={() => handleRunScene(scene)} style={{
                     background: '#F5824A',
                     color: '#EDE4C2',
                     border: 'none',
