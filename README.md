@@ -1,258 +1,451 @@
 # home-control
 
-Smart home device and scene management system.
+**Smart home device and scene management system with Philips Hue Bridge integration and mock device fallback.**
 
-## Description
-
-This project is a TypeScript-based smart home control system that defines device types, capabilities, and scenes for managing home automation. It includes a REST API and WebSocket server for real-time control and monitoring of mock smart home devices.
+A TypeScript-based home automation platform that manages smart home devices and scenes through REST API, WebSocket real-time updates, and a React dashboard. Includes native Philips Hue Bridge support with graceful fallback to mock devices.
 
 ## Features
 
+- **Philips Hue Bridge Integration**: Direct API connection to Hue Bridge for real-time light control
+- **Mock Device Fallback**: Graceful fallback when Hue Bridge unavailable
 - **Device Management**: Support for Hue and Nanoleaf devices with configurable capabilities (brightness, color, temperature)
-- **Scene Execution**: Predefined scenes that apply multiple actions to devices simultaneously
-- **REST API**: Endpoints for retrieving device states and executing scenes
-- **Real-Time Updates**: WebSocket integration for live state synchronization across clients
-- **TypeScript**: Fully typed codebase for better development experience and error prevention
-- **Mock Data**: Includes sample devices and scenes for testing and demonstration
-- **React Dashboard**: Frontend interface that fetches and displays device list from backend API
-- **Electron App**: Desktop application wrapper for the React dashboard
+- **Scene Management**: Predefined scenes that execute multiple device actions with validation
+  - Validate device IDs before scene creation
+  - Store device type with each action for correct handler routing
+  - Execute scenes with error isolation per device
+- **REST API**: Full-featured endpoints for device state, scene creation/execution, and device control
+- **Real-Time Updates**: WebSocket integration for live state synchronization
+- **Device Service Architecture**: Modular handler-based routing for extensible device support
+- **Data Persistence**: JSON file storage for mock devices and scenes
+- **React Dashboard**: Modern frontend interface with device controls and scene management
+- **Electron Desktop App**: Native desktop application wrapper
+
+## Prerequisites
+
+- **Node.js** v16 or higher
+- **npm** v7 or higher
+- **Philips Hue Bridge** (optional - system works with mock devices if unavailable)
+- **Hue API Credentials** (optional - set via `.env` file)
 
 ## Installation
 
+### Backend Setup
+
 ```bash
+# Install backend dependencies
 npm install
 ```
 
-This installs all dependencies including Express, WebSocket, and TypeScript-related packages.
+### Frontend Setup
 
-## Usage
+```bash
+# Install frontend dependencies
+cd client
+npm install
+cd ..
+```
 
-### Development Setup
+## Configuration
 
-1. **Install backend dependencies**:
-   ```bash
-   npm install
-   ```
+### Environment Variables
 
-2. **Install frontend dependencies**:
-   ```bash
-   cd client
-   npm install
-   cd ..
-   ```
+Create a `.env` file in the project root to configure Hue Bridge connection:
 
-3. **Build the backend**:
-   ```bash
-   npm run build
-   ```
+```env
+# Hue Bridge Configuration (optional)
+HUE_BRIDGE_IP=192.168.1.100
+HUE_USERNAME=your-hue-api-key
+```
 
-4. **Start the backend server**:
-   ```bash
-   npm start
-   ```
+**Note**: If these are not set, the system will gracefully fall back to mock devices.
 
-6. **Start the Electron app** (in a new terminal, after starting frontend):
-   ```bash
-   npm run electron
-   ```
+To get your Hue credentials:
+1. Visit `http://<bridge-ip>/debug/clip.html`
+2. Create a new user and note the username
 
-   This opens a 1200x800 desktop window loading the React dashboard.
+## Quick Start
 
-7. **Full development mode** (backend + frontend + Electron):
-   ```bash
-   npm run full-dev
-   ```
+### Option 1: Full Development Mode
+Starts backend, frontend, and Electron app simultaneously:
 
-   This starts all components concurrently.
+```bash
+npm run full-dev
+```
 
-8. **Frontend + Electron only**:
-   ```bash
-   npm run electron-dev
-   ```
+### Option 2: Backend Only
+```bash
+npm start
+```
+Backend server runs on `http://localhost:3000`
 
-   Starts the React dev server and Electron app together.
+### Option 3: Frontend Only
+```bash
+cd client
+npm run dev
+```
+Frontend dev server runs on `http://localhost:5173`
 
-9. **Frontend + Electron only** (from client directory):
-   ```bash
-   cd client
-   npm run dev-electron
-   ```
-
-   Starts the React dev server and Electron app together from the client folder.
-
-### API Endpoints
-
-#### GET /state
-Returns the current state of all devices.
-
-- **Method**: GET
-- **URL**: `/state`
-- **Response**: 
-  ```json
-  {
-    "devices": [
-      {
-        "id": "hue1",
-        "type": "Hue",
-        "capabilities": {
-          "brightness": true,
-          "color": true,
-          "temperature": true
-        },
-        "state": {
-          "brightness": 80,
-          "color": { "r": 255, "g": 255, "b": 255 },
-          "temperature": 4000
-        }
-      }
-    ]
-  }
-  ```
-
-#### POST /scene/run
-Executes a scene by name, updating device states accordingly.
-
-- **Method**: POST
-- **URL**: `/scene/run`
-- **Body**:
-  ```json
-  {
-    "sceneName": "Morning"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "message": "Scene 'Morning' executed"
-  }
-  ```
-- **Error Response** (404 if scene not found):
-  ```json
-  {
-    "error": "Scene not found"
-  }
-  ```
-
-### WebSocket
-
-Connect to `ws://localhost:3000` for real-time updates.
-
-- **Connection**: Clients receive the initial state upon connection
-- **Messages**: Server broadcasts state updates when scenes are executed
-- **Message Format**:
-  ```json
-  {
-    "type": "state",
-    "data": {
-      "devices": [...]
-    }
-  }
-  ```
-
-### Example Usage
-
-1. **Quick start** (all components): `npm run full-dev`
-2. Start components individually:
-   - Backend: `npm start`
-   - Frontend: `cd client && npm run dev`
-   - Electron: `npm run electron` (after frontend is running)
-3. **Frontend + Electron only**: `npm run electron-dev` or `cd client && npm run dev-electron`
-4. Test the API:
-   - Get current state: `curl http://localhost:3000/state`
-   - Run a scene: `curl -X POST http://localhost:3000/scene/run -H "Content-Type: application/json" -d '{"sceneName": "Morning"}'`
-5. For WebSocket testing, use a client like [WebSocket King](https://websocketking.com/) or implement in your frontend
+### Option 4: Desktop App
+```bash
+npm run electron
+# Or combined with frontend:
+npm run electron-dev
+```
 
 ## Project Structure
 
 ```
 home-control/
-├── README.md                 # Project documentation
-├── package.json              # Backend Node.js dependencies and scripts
-├── tsconfig.json             # Backend TypeScript configuration
-├── .gitignore                # Git ignore rules
-├── src/                      # Backend source code
-│   ├── types.ts              # TypeScript type definitions
-│   ├── index.ts              # Example/demo script with sample data
-│   └── server.ts             # Express server with API and WebSocket
-├── dist/                     # Backend compiled JavaScript output (generated)
-├── client/                   # Frontend React application
-│   ├── package.json          # Frontend dependencies and scripts
-│   ├── vite.config.ts        # Vite build configuration
-│   ├── index.html            # Main HTML file
-│   ├── tsconfig.json         # Frontend TypeScript configuration
-│   ├── tsconfig.node.json    # Node-specific TypeScript config
-│   ├── .eslintrc.cjs         # ESLint configuration
-│   └── src/                  # Frontend source code
-│       ├── main.tsx          # React app entry point
-│       ├── App.tsx           # Main App component with Dashboard
-│       ├── App.css           # App-specific styles
-│       └── index.css         # Global styles
-├── electron/                 # Electron desktop application
-│   ├── main.js               # Electron main process
-│   └── preload.js            # Preload script for IPC
-└── node_modules/             # Backend installed dependencies (generated)
+├── README.md                           # Project documentation
+├── .env                                # Environment variables (HUE_BRIDGE_IP, HUE_USERNAME)
+├── .env.example                        # Example environment variables
+├── package.json                        # Backend dependencies and scripts
+├── tsconfig.json                       # Backend TypeScript configuration
+├── shared/
+│   └── types.ts                        # Shared type definitions for backend/frontend
+├── src/                                # Backend source code
+│   ├── index.ts                        # Entry point with store initialization
+│   ├── server.ts                       # Express server with API & WebSocket
+│   ├── store.ts                        # JSON persistence layer (data.json)
+│   ├── devices/                        # Device handler modules
+│   │   ├── deviceService.ts            # Device routing & scene execution orchestration
+│   │   ├── hueDevice.ts                # Philips Hue Bridge integration (node-hue-api v3)
+│   │   ├── mockDevice.ts               # Mock device implementations (for testing/fallback)
+│   │   └── nanoleafDevice.ts           # Nanoleaf placeholder (future implementation)
+│   └── socket.ts                       # WebSocket connection manager
+├── dist/                               # Compiled JavaScript output (generated)
+├── client/                             # React frontend application
+│   ├── package.json                    # Frontend dependencies and scripts
+│   ├── vite.config.ts                  # Vite build configuration
+│   ├── tsconfig.json                   # Frontend TypeScript config
+│   ├── index.html                      # Entry HTML file
+│   └── src/
+│       ├── main.tsx                    # React app entry point
+│       ├── App.tsx                     # Main app component with Dashboard
+│       ├── api.ts                      # HTTP fetch wrappers for backend API
+│       ├── socket.ts                   # Frontend WebSocket client
+│       ├── App.css                     # App-specific styles
+│       └── index.css                   # Global styles
+├── electron/                           # Electron desktop app
+│   ├── main.js                         # Electron main process
+│   └── preload.js                      # IPC preload script
+└── data.json                           # Persisted mock devices and scenes (generated)
 ```
 
-### Key Files Explanation
+## API Endpoints
 
-- **`src/types.ts`**: Defines core interfaces and types
-  - `Device`: Represents a smart home device with ID, type, capabilities, and current state
-  - `DeviceState`: Current values for brightness, color, and temperature
-  - `Action`: Individual actions that can be applied to devices
-  - `Scene`: Collections of actions for automated execution
+### GET /state
+Returns current state of all devices (Hue + mock).
 
-- **`src/server.ts`**: Main server application
-  - Sets up Express app with JSON middleware
-  - Defines API routes for state retrieval and scene execution
-  - Integrates WebSocket server for real-time updates
-  - Manages mock device data and scene definitions
+**Response**:
+```json
+{
+  "devices": [
+    {
+      "id": "8",
+      "name": "Living Room Light",
+      "type": "Hue",
+      "isOn": true,
+      "brightness": 75,
+      "capabilities": {
+        "brightness": true,
+        "color": true,
+        "temperature": true
+      },
+      "state": {
+        "isOn": true,
+        "brightness": 75
+      }
+    }
+  ],
+  "scenes": [...]
+}
+```
 
-- **`src/index.ts`**: Standalone script for demonstrating types and data
-  - Shows how to define devices and scenes
-  - Logs formatted output of the defined data
-  - Useful for testing type definitions
+### POST /device/:id/toggle
+Toggle a device on/off (routes to Hue or mock handler).
 
-- **`package.json`**: Project configuration
-  - Lists dependencies (Express, WebSocket)
-  - Defines scripts for building, running, and development
-  - Includes TypeScript and type definitions
+**Parameters**: 
+- `id` (path): Device ID (string or number)
 
-- **`tsconfig.json`**: TypeScript compiler options
-  - Configures compilation to CommonJS modules
-  - Sets output directory to `dist/`
-  - Enables strict type checking and ES module interop
+**Response**:
+```json
+{
+  "success": true,
+  "state": { "isOn": true }
+}
+```
 
-## Architecture
+### POST /scene/create
+Create and save a scene with validation.
 
-The system follows a client-server architecture with separate frontend and backend:
+**Body**:
+```json
+{
+  "scene": {
+    "name": "Evening Relax",
+    "actions": [
+      {
+        "deviceId": "8",
+        "state": { "isOn": true, "brightness": 30 }
+      },
+      {
+        "deviceId": "9",
+        "state": { "isOn": false }
+      }
+    ]
+  }
+}
+```
 
-1. **Backend Server**: Express.js application managing device state and scene execution
-2. **API Layer**: REST endpoints for external control
-3. **Real-Time Layer**: WebSocket for push notifications
-4. **Frontend**: React application for user interface
-5. **Desktop App**: Electron wrapper providing native desktop experience
-6. **Data Layer**: In-memory storage of device states and scene definitions
+**Validation**:
+- All device IDs must exist in Hue Bridge or mock devices
+- Returns error with invalid device IDs if validation fails
+- Device type is automatically stored with each action
 
-Device states are updated in-place, and changes are immediately broadcast to connected WebSocket clients, enabling real-time synchronization across multiple interfaces.
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Scene 'Evening Relax' created",
+  "scenes": [...]
+}
+```
+
+### POST /scene/run
+Execute a saved scene (runs all actions in parallel).
+
+**Body**:
+```json
+{
+  "scene": {
+    "name": "Evening Relax",
+    "actions": [...]
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Scene 'Evening Relax' executed",
+  "result": {
+    "success": 2,
+    "failed": 0,
+    "errors": {}
+  },
+  "devices": [...]
+}
+```
+
+**Error Handling**: Individual device action failures don't stop scene execution. Errors are captured per device.
+
+### GET /scenes
+Get all saved scenes.
+
+**Response**:
+```json
+{
+  "scenes": [
+    {
+      "name": "Morning",
+      "actions": [
+        {
+          "deviceId": "8",
+          "type": "Hue",
+          "state": { "isOn": true, "brightness": 100 }
+        }
+      ]
+    }
+  ]
+}
+```
+
+## WebSocket
+
+Connect to `ws://localhost:3000` for real-time device state updates.
+
+**Initial Connection**:
+- Client receives current device state immediately upon connection
+- Client can auto-reconnect with 2-second retry interval
+
+**Message Format**:
+```json
+{
+  "type": "state",
+  "data": {
+    "devices": [...]
+  }
+}
+```
+
+## Device Handler Architecture
+
+The system uses a modular handler pattern for device control:
+
+### Device Service (`src/devices/deviceService.ts`)
+- **Routing**: Routes device operations to appropriate handler (Hue or mock)
+- **Scene Execution**: Executes all scene actions in parallel with error isolation
+- **Device Lookup**: Checks Hue Bridge first, then mock devices
+- **Logging**: Detailed logging for debugging device operations
+
+### Hue Device Handler (`src/devices/hueDevice.ts`)
+- **Connection**: Persistent singleton connection to Hue Bridge
+- **API**: Uses node-hue-api v3 for Hue Bridge communication
+- **Functions**:
+  - `getHueApi()`: Get or create persistent connection
+  - `getAllLights()`: Fetch all lights from bridge
+  - `toggle(deviceId)`: Toggle light on/off
+  - `setState(deviceId, state)`: Update light state
+  - `getState(deviceId)`: Read current light state
+- **Error Handling**: Graceful failures with detailed logging
+
+### Mock Device Handler (`src/devices/mockDevice.ts`)
+- **Fallback**: Used when Hue Bridge unavailable or for testing
+- **Persistence**: Mock devices stored in `data.json`
+- **Functions**: Same interface as Hue handler
+
+## Data Persistence
+
+### Store Module (`src/store.ts`)
+- **Format**: JSON file (`data.json`)
+- **Contents**: Mock devices and saved scenes
+- **Auto-save**: State saved on device updates and scene creation
+- **Initialization**: Creates default devices/scenes if file doesn't exist
+
+**Default mock devices**:
+```json
+{
+  "devices": [
+    {
+      "id": "1",
+      "name": "Living Room Light",
+      "type": "mock",
+      "capabilities": { "brightness": true, "color": true, "temperature": true },
+      "state": { "isOn": true, "brightness": 50 }
+    }
+  ]
+}
+```
 
 ## Development
 
-- **Backend Language**: TypeScript
-- **Backend Runtime**: Node.js
-- **Backend Framework**: Express.js
-- **WebSocket**: ws library
-- **Frontend Framework**: React with TypeScript
-- **Frontend Build Tool**: Vite
-- **Desktop Framework**: Electron
-- **Build Tools**: TypeScript compiler (tsc), Electron Builder
-- **Development Tools**: Concurrently (parallel commands), Wait-on (service readiness)
+### Available Scripts
 
-To extend the system:
-- Add new device types in `src/types.ts`
-- Implement additional API endpoints in `src/server.ts`
-- Create new scenes by adding to the scenes array
-- Integrate with real smart home APIs by replacing mock data with actual device communication
-- Enhance the frontend in `client/src/` to connect to the backend API and WebSocket
-- Add IPC communication in `electron/preload.js` for desktop-specific features
-- Use `electron-builder` to create distributable packages for different platforms
+**Backend**:
+- `npm start` - Run backend server (ts-node)
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm run dev` - Backend with auto-reload (via full-dev)
+
+**Frontend**:
+- `cd client && npm run dev` - Start Vite dev server
+- `cd client && npm run build` - Build for production
+
+**Desktop**:
+- `npm run electron` - Launch Electron app
+- `npm run electron-dev` - Electron + frontend dev server
+- `npm run full-dev` - All components (backend + frontend + Electron)
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Runtime** | Node.js v16+ |
+| **Language** | TypeScript 5+ |
+| **Backend** | Express.js, ws (WebSocket) |
+| **Backend API** | node-hue-api v3 |
+| **Frontend** | React 18, Vite |
+| **Desktop** | Electron 40 |
+| **Data Storage** | JSON file (fs module) |
+| **Configuration** | dotenv |
+
+### Extending the System
+
+#### Adding a New Device Type
+1. Create handler in `src/devices/newDevice.ts` with exports: `toggle()`, `setState()`, `getState()`, `getAllLights()`
+2. Add type to `Action` and `Device` interfaces in `shared/types.ts`
+3. Register handler in `deviceHandlers` map in `deviceService.ts`
+4. Update device routing logic if needed
+
+#### Adding API Endpoints
+1. Add route to `src/server.ts` using `app.get/post/put/delete()`
+2. Use `deviceService` functions for device operations
+3. Call `broadcastUpdate()` if state changed
+4. Add corresponding frontend API call in `client/src/api.ts`
+
+#### Integration with Real APIs
+- Replace mock data in `store.ts` with actual API calls
+- Create new device handler with real API communication
+- Implement error handling and logging
+- Test with fallback to mocks
+
+## Troubleshooting
+
+### Hue Bridge Not Found
+1. Check `.env` file has correct `HUE_BRIDGE_IP`
+2. Ensure Hue Bridge is on same network
+3. System will fall back to mock devices
+4. Check console logs for detailed error messages
+
+### Devices Not Updating
+1. Check WebSocket connection: `ws://localhost:3000`
+2. Verify backend is running on port 3000
+3. Check browser console for connection errors
+4. Restart backend with `npm start`
+
+### Scene Validation Fails
+1. Verify all device IDs in scene exist
+2. Check device names and types match
+3. Review API response for invalid device list
+4. Use `/state` endpoint to get valid device IDs
+
+### Mock Devices Not Persisting
+1. Check `data.json` file exists and is readable
+2. Verify write permissions in project root
+3. Check disk space availability
+4. Review console logs for save errors
+
+## Example Usage
+
+### Get Device State
+```bash
+curl http://localhost:3000/state
+```
+
+### Toggle a Hue Light
+```bash
+curl -X POST http://localhost:3000/device/8/toggle \
+  -H "Content-Type: application/json"
+```
+
+### Create a Scene
+```bash
+curl -X POST http://localhost:3000/scene/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scene": {
+      "name": "Night Mode",
+      "actions": [
+        {"deviceId": "8", "state": {"isOn": false}},
+        {"deviceId": "9", "state": {"isOn": true, "brightness": 10}}
+      ]
+    }
+  }'
+```
+
+### Run a Scene
+```bash
+curl -X POST http://localhost:3000/scene/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scene": {
+      "name": "Night Mode",
+      "actions": [...]
+    }
+  }'
+```
+
+## License
+
+Proprietary - Home Control System 2026
