@@ -37,7 +37,7 @@ interface ScenesResponse {
   scenes: Scene[];
 }
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://192.168.0.129:3000';
 
 /**
  * Fetch current device states from the backend

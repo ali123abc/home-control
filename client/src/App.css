@@ -1,81 +1,61 @@
+/* Global styles - minimal CSS, most styling is inline */
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  background: linear-gradient(135deg, #254F22 0%, #2a5a2a 100%);
-  min-height: 100vh;
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.dashboard h1 {
-  color: #EDE4C2;
-  font-size: 3rem;
-  font-weight: 300;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  margin: 0;
-}
-
-.devices-section {
   width: 100%;
-  max-width: 800px;
-}
-
-.devices-section h2 {
-  color: #F5824A;
-  font-size: 2rem;
-  font-weight: 400;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.device-list {
-  background: #EDE4C2;
-  padding: 2rem;
-  border-radius: 15px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  border: 2px solid #A03A13;
-}
-
-.device-list ul {
-  list-style: none;
+  height: 100%;
+  margin: 0;
   padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  padding: 0;
+  background: #000814; /* Deep black for fallback */
 }
 
-.device-list li {
-  background: #A03A13;
-  color: #EDE4C2;
-  padding: 1rem;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 500;
-  text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+/* Remove any conflicting styles from old dashboard class */
+.dashboard {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
 }
 
-.device-list li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+/* Input focus styles for better visibility */
+input[type="text"]:focus,
+input[type="range"]:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(157, 78, 221, 1) !important;
+  box-shadow: 0 0 10px rgba(157, 78, 221, 0.3);
 }
 
-.device-list p {
-  color: #254F22;
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin: 0;
+/* Checkbox and radio styles */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: rgba(157, 78, 221, 0.8);
+  cursor: pointer;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 50, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(157, 78, 221, 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 78, 221, 0.8);
 }
